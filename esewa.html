@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eSewa Sandbox Payment</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/hmac-sha256.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/enc-base64.min.js"></script>
+</head>
+<body>
+
+  <h2>eSewa Sandbox Payment Test</h2>
+  <form id="esewaForm" action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST" target="_blank">
+
+    <label>Amount (≤100 NPR for sandbox): </label>
+    <input type="number" id="amount" name="amount" value="100" max="5000" required><br><br>
+
+    <input type="hidden" id="tax_amount" name="tax_amount" value="0">
+    <input type="hidden" id="total_amount" name="total_amount" value="100">
+    <input type="hidden" id="transaction_uuid" name="transaction_uuid" value="">
+    <input type="hidden" id="product_code" name="product_code" value="EPAYTEST">
+    <input type="hidden" id="product_service_charge" name="product_service_charge" value="0">
+    <input type="hidden" id="product_delivery_charge" name="product_delivery_charge" value="0">
+    <input type="hidden" id="success_url" name="success_url" value="http://localhost/esewa-test/success.php">
+    <input type="hidden" id="failure_url" name="failure_url" value="http://localhost/esewa-test/failure.php">
+    <input type="hidden" id="signed_field_names" name="signed_field_names" value="total_amount,transaction_uuid,product_code">
+    <input type="hidden" id="signature" name="signature" value="">
+    <br><br>
+    
+    <button type="submit" style="background-color:#60bb46;color:#fff;padding:5px 10px;border:none;cursor:pointer;">
+      Pay with eSewa
+    </button>
+  </form>
+
+<script>
+  const secret = "8gBm/:&EnhH.1/q";
+  const form = document.getElementById("esewaForm");
+  const amountInput = document.getElementById("amount");
+  const totalInput = document.getElementById("total_amount");
+  const uuidInput = document.getElementById("transaction_uuid");
+  const signatureInput = document.getElementById("signature");
+
+  function generateTransactionUUID() {
+      const now = new Date();
+      return 'TXN-' + now.getTime();
+  }
+
+  function generateSignature() {
+      const total_amount = totalInput.value;
+      const transaction_uuid = uuidInput.value;
+      const product_code = document.getElementById("product_code").value;
+
+      const data = `total_amount=${total_amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
+      const hash = CryptoJS.HmacSHA256(data, secret);
+      signatureInput.value = CryptoJS.enc.Base64.stringify(hash);
+  }
+
+  form.addEventListener("submit", function(e) {
+      // Generate unique transaction ID
+      uuidInput.value = generateTransactionUUID();
+      // Set total_amount = amount (sandbox requirement)
+      totalInput.value = amountInput.value;
+      // Generate signature
+      generateSignature();
+      // allow form submission
+  });
+
+  // Regenerate signature when amount changes
+  amountInput.addEventListener("input", function() {
+      totalInput.value = amountInput.value;
+  });
+
+</script>
+</body>
+</html>
